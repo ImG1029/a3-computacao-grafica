@@ -22,7 +22,15 @@
       "Bash(curl -s -X POST http://localhost:5000/api/recognize -H 'Content-Type: application/json' -d '{\"rosto\":\"Oval Padrao\",\"cabelo\":\"Curto Escuro\",\"olhos\":\"Abertos Marrom\",\"nariz\":\"Pequeno\",\"boca\":\"Neutra\"}')",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:5000/api/component-image/rosto/Oval%20Padrao\")",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\" \"http://localhost:5000/\")",
-      "Bash(kill %1)"
+      "Bash(kill %1)",
+      "Bash(python -c \"import mediapipe; print\\('mediapipe OK:', mediapipe.__version__\\)\")",
+      "Bash(python3 -c \"import mediapipe; print\\('mediapipe OK:', mediapipe.__version__\\)\")",
+      "Bash(python3 generate_assets_real.py --download --n 3)",
+      "Bash(python3 -c \"from mediapipe.python.solutions import face_mesh; print\\('OK'\\); fm = face_mesh.FaceMesh\\(static_image_mode=True, max_num_faces=1\\); print\\('FaceMesh criado'\\)\")",
+      "Bash(python3 -c \"import mediapipe as mp; print\\(dir\\(mp\\)\\)\")",
+      "Bash(python3 -c \"from mediapipe.tasks import python; from mediapipe.tasks.python import vision; print\\(dir\\(vision\\)\\)\")",
+      "Bash(python3 generate_assets_real.py)",
+      "Bash(python3 generate_assets_real.py --download --n 10 --keep-old)"
     ]
   }
 }
