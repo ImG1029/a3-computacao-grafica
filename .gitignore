@@ -1,0 +1,30 @@
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Ambiente virtual
+.venv/
+venv/
+env/
+
+# Gerados pelo sistema
+output/
+model/
+
+# Base de dados (pesada demais para versionar)
+database/
+
+# Assets placeholder (regenerados via generate_assets.py)
+# Comente esta linha se quiser versionar seus assets finais
+# faces/
+
+# IDEs
+.idea/
+.vscode/
+*.code-workspace
+
+# OS
+.DS_Store
+Thumbs.db

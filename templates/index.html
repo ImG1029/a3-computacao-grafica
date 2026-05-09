@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Sistema de Retrato Falado</title>
+  <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+
+<!-- ── Header ──────────────────────────────────────────────────────────── -->
+<header class="header">
+  <div class="header-brand">
+    <div class="brand-icon">🔍</div>
+    <div>
+      <div class="brand-title">SISTEMA DE RETRATO FALADO</div>
+      <div class="brand-sub">IDENTIFICAÇÃO FACIAL POR COMPOSIÇÃO · UNA 2026.1</div>
+    </div>
+  </div>
+
+  <div class="header-controls">
+    <div class="model-pill">
+      <span class="dot warn" id="dot"></span>
+      <span id="dot-text">Carregando...</span>
+    </div>
+    <button class="btn btn-ghost" onclick="trainModel()">⚙️ Treinar Modelo</button>
+  </div>
+</header>
+
+<!-- ── Layout ──────────────────────────────────────────────────────────── -->
+<div class="layout">
+
+  <!-- LEFT: component selectors -->
+  <aside class="sidebar">
+    <div id="sidebar-inner"></div>
+  </aside>
+
+  <!-- CENTER: face preview + controls -->
+  <main class="center">
+    <div class="composer">
+      <div class="composer-label">RETRATO COMPOSTO</div>
+
+      <div class="face-frame">
+        <img id="preview" src="" alt="Retrato falado">
+        <div class="face-overlay" id="face-overlay">
+          <div class="spinner"></div>
+        </div>
+      </div>
+
+      <div class="btn-row">
+        <button class="btn btn-ghost" onclick="savePortrait()">💾 Salvar</button>
+        <button class="btn btn-primary" id="btn-rec" onclick="recognize()">
+          🔍 Reconhecer Suspeito
+        </button>
+      </div>
+
+      <div class="status-line" id="status-bar"></div>
+    </div>
+  </main>
+
+  <!-- RIGHT: recognition results (hidden until recognized) -->
+  <aside class="results-panel" id="results-panel">
+    <div class="results-header">
+      <span>RESULTADOS — TOP 5</span>
+      <button class="close-x" onclick="closeResults()">✕</button>
+    </div>
+    <div id="results-list"></div>
+  </aside>
+
+</div>
+
+<!-- ── Train modal ─────────────────────────────────────────────────────── -->
+<div class="overlay hidden" id="train-modal">
+  <div class="modal-box">
+    <div class="modal-title">Treinando Modelo LBPH</div>
+    <div class="modal-spinner"></div>
+    <div class="modal-sub" id="train-msg">Iniciando...</div>
+  </div>
+</div>
+
+<script src="/static/js/app.js"></script>
+</body>
+</html>
