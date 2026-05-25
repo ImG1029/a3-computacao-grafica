@@ -147,7 +147,7 @@ html, body {
 
 .thumb-grid {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(2, 1fr);
   gap: 5px;
 }
 
@@ -157,7 +157,7 @@ html, body {
   border-radius: 7px;
   border: 2px solid var(--border);
   background: #fff;
-  aspect-ratio: 1;
+  aspect-ratio: 5 / 3;
   overflow: hidden;
   display: flex;
   align-items: center;

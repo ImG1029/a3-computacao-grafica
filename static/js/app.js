@@ -10,9 +10,9 @@ let composeJob  = null; // debounce timer
 document.addEventListener('DOMContentLoaded', async () => {
   await Promise.all([loadComponents(), refreshModelInfo()]);
 
-  // Default: first option of each category
-  for (const [cat, data] of Object.entries(components)) {
-    selection[cat] = data.options.length ? data.options[0].name : null;
+  // Default: nenhum componente selecionado
+  for (const cat of Object.keys(components)) {
+    selection[cat] = null;
   }
   highlightAll();
   await compose();
