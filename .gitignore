@@ -15,6 +15,7 @@ model/
 
 # Base de dados (pesada demais para versionar)
 database/
+database_lfw_backup/
 
 # Assets placeholder (regenerados via generate_assets.py)
 # Comente esta linha se quiser versionar seus assets finais

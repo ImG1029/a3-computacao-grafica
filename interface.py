@@ -166,7 +166,8 @@ class FaceComposerApp(tk.Tk):
             )
             return
 
-        image = composer.compose(self._selection())
+        selection = self._selection()
+        image = composer.compose(selection)
 
         def task() -> tuple[Image.Image, list[Match]]:
             if not features.is_trained():
@@ -174,7 +175,7 @@ class FaceComposerApp(tk.Tk):
                 rec.train_model()
             self.after(0, lambda: self._status("Reconhecendo..."))
             composer.save(image)
-            matches = rec.recognize(image, top_n=5)
+            matches = rec.recognize_selection(selection, top_n=5)
             return image, matches
 
         def on_done(result: tuple[Image.Image, list[Match]]) -> None:

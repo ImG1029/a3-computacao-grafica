@@ -107,7 +107,7 @@ def api_recognize():
     image = composer.compose(selection)
     composer.save(image)
     try:
-        matches = rec.recognize(image, top_n=5)
+        matches = rec.recognize_selection(selection, top_n=5)
     except Exception as exc:
         return jsonify({"error": str(exc)}), 500
     return jsonify({
