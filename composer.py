@@ -10,16 +10,15 @@ FACES_DIR = Path(__file__).parent / "faces"
 OUTPUT_DIR = Path(__file__).parent / "output"
 OUTPUT_PATH = OUTPUT_DIR / "retrato_falado_suspeito.png"
 
-LAYER_ORDER = ["rosto", "cabelo", "sobrancelhas", "olhos", "nariz", "boca", "barba"]
+LAYER_ORDER = ["cabelo", "sobrancelhas", "olhos", "nariz", "boca", "queixo"]
 
 CATEGORY_LABELS = {
     "cabelo": "Cabelo",
-    "rosto": "Rosto",
     "sobrancelhas": "Sobrancelhas",
     "olhos": "Olhos",
     "nariz": "Nariz",
     "boca": "Boca",
-    "barba": "Barba",
+    "queixo": "Queixo",
 }
 
 # ── WARPING ───────────────────────────────────────────────────────────────────
@@ -54,7 +53,7 @@ _COMPONENT_ZONES: dict[str, tuple] = {
     "olhos":        ( 0.36,  0.46, -0.86,  0.86),
     "nariz":        ( 0.44,  0.70, -0.19,  0.19),
     "boca":         ( 0.74,  0.88, -0.51,  0.51),
-    "barba":        ( 0.71,  1.22, -1.02,  1.02),
+    "queixo":       ( 0.88,  1.05, -0.45,  0.45),
 }
 
 _REF = _FACE_PARAMS["oval_padrao"]

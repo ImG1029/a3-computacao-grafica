@@ -40,7 +40,7 @@ MODEL_URL  = (
     "face_landmarker/face_landmarker/float16/1/face_landmarker.task"
 )
 
-CATEGORIES = ["rosto", "cabelo", "sobrancelhas", "olhos", "nariz", "boca", "barba"]
+CATEGORIES = ["cabelo", "sobrancelhas", "olhos", "nariz", "boca", "queixo"]
 
 FACE_OVAL  = [10,338,297,332,284,251,389,356,454,323,361,288,
               397,365,379,378,400,377,152,148,176,149,150,136,
@@ -65,7 +65,7 @@ LM_EYE_R_OUT = 263
 EYE_L_TARGET = (188, 285)
 EYE_R_TARGET = (312, 285)
 
-FEATHER_PX = 40
+FEATHER_PX = 15
 
 
 def _get_model() -> Path:
@@ -222,40 +222,39 @@ def _process_one(img_path: Path, detector, idx: int) -> bool:
     mouth_bot = int(mouth_pts[:, 1].max())
     chin_y    = int(lms[LM_CHIN][1])
 
-    margin  = 35
+    margin  = 12
     tag     = f"{idx:02d}"
 
     face_m = _face_mask(lms, expand=0.08, feather=24)
     hair_m = _hair_mask(lms, face_m)
 
-    # rosto — face within oval mask (background becomes transparent → white)
-    rosto_rgba = cv2.cvtColor(aligned, cv2.COLOR_BGR2RGBA)
-    rosto_rgba[:, :, 3] = face_m
-    _save(Image.fromarray(rosto_rgba), "rosto", tag)
+    # Raw vertical extent of each band, tight to its component (top → bottom).
+    bands = {
+        "cabelo":       [0,                  brow_top + 20],
+        "sobrancelhas": [brow_top - margin,  brow_bot + margin],
+        "olhos":        [eye_top - margin,   eye_bot + margin],
+        "nariz":        [nose_root - margin, nose_bot + margin],
+        "boca":         [mouth_top - margin, mouth_bot + margin],
+        "queixo":       [mouth_bot + margin, min(chin_y + 35, H)],
+    }
+    order = ["cabelo", "sobrancelhas", "olhos", "nariz", "boca", "queixo"]
 
-    # cabelo — uses hair mask (face oval + region above forehead)
-    _save(_extract_strip(aligned, 0, brow_top + 20, hair_m, feather=FEATHER_PX),
-          "cabelo", tag)
+    # Close white seams: where two adjacent bands have a gap (or barely touch),
+    # make them meet at the midpoint and overlap by FEATHER_PX on each side, so
+    # the gradient edges are hidden by the neighbour. Bands that already overlap
+    # enough are left untouched, so each component stays limited to its feature.
+    need = 2 * FEATHER_PX
+    for up, low in zip(order, order[1:]):
+        if bands[low][0] - bands[up][1] > -need:  # gap or insufficient overlap
+            seam = (bands[up][1] + bands[low][0]) // 2
+            bands[up][1]  = seam + FEATHER_PX
+            bands[low][0] = seam - FEATHER_PX
 
-    # sobrancelhas, olhos, nariz, boca — face oval clips the background
-    _save(_extract_strip(aligned, brow_top - margin, brow_bot + margin, face_m, FEATHER_PX),
-          "sobrancelhas", tag)
-
-    _save(_extract_strip(aligned, eye_top - margin, eye_bot + margin, face_m, FEATHER_PX),
-          "olhos", tag)
-
-    _save(_extract_strip(aligned, nose_root - margin, nose_bot + margin, face_m, FEATHER_PX),
-          "nariz", tag)
-
-    _save(_extract_strip(aligned, mouth_top - margin, min(chin_y + 35, H), face_m, FEATHER_PX),
-          "boca", tag)
-
-    # barba — placeholder transparente
-    barba_dir = FACES_DIR / "barba"
-    barba_dir.mkdir(parents=True, exist_ok=True)
-    sem = barba_dir / "sem_barba.png"
-    if not sem.exists():
-        Image.new("RGBA", (W, H), 0).save(sem, "PNG")
+    # cabelo uses the hair mask (oval + region above forehead); the rest the oval
+    for cat in order:
+        mask = hair_m if cat == "cabelo" else face_m
+        y_top, y_bot = bands[cat]
+        _save(_extract_strip(aligned, y_top, y_bot, mask, FEATHER_PX), cat, tag)
 
     print(f"  ✓ {img_path.name} → face_{tag}")
     return True

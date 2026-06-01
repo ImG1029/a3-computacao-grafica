@@ -98,10 +98,7 @@ def recognize_selection(selection: dict[str, Path | None], top_n: int = 5) -> li
     `selection` maps each category to the chosen component Path (or None). Only
     categories with a real, non-constant component contribute to the score.
     """
-    chosen = {
-        cat: path for cat, path in selection.items()
-        if path and cat != "barba"  # barba is a transparent placeholder → neutral
-    }
+    chosen = {cat: path for cat, path in selection.items() if path}
     if not chosen:
         raise RuntimeError("Selecione ao menos um componente para reconhecer.")
 

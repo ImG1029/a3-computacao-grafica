@@ -58,8 +58,8 @@ async function loadComponents() {
 }
 
 const CAT_ICON = {
-  cabelo:'💈', rosto:'🧔', sobrancelhas:'〰️',
-  olhos:'👁️', nariz:'👃', boca:'👄', barba:'🪒',
+  cabelo:'💈', sobrancelhas:'〰️',
+  olhos:'👁️', nariz:'👃', boca:'👄', queixo:'🫦',
 };
 
 function buildSidebar() {
