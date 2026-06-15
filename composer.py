@@ -2,7 +2,7 @@ from pathlib import Path
 
 import cv2
 import numpy as np
-from PIL import Image
+from PIL import Image, ImageFilter
 
 CANVAS_SIZE = (500, 600)
 W, H = CANVAS_SIZE
@@ -105,6 +105,58 @@ def _warp_component(img: Image.Image, category: str, face_shape: str) -> Image.I
     return Image.fromarray(warped)
 
 
+# ── SEAMLESS FLATTENING ─────────────────────────────────────────────────────
+#
+# Each component is a horizontal strip whose alpha = min(vertical feather,
+# feathered face oval). Toward the sides those two factors multiply, so the
+# combined alpha never reaches 100%. Composited over the white canvas, that
+# partial alpha lets the background bleed through as light/white streaks at the
+# band junctions — the artifact this module fixes.
+#
+# The fix has two parts, applied after all components are stacked on a
+# transparent canvas:
+#   1. A single clean silhouette: one softly-feathered outer edge derived from
+#      the union of every component's alpha, instead of each strip carrying its
+#      own oval edge (which produced the serrated lateral streaks).
+#   2. An alpha-weighted fill: behind every semi-transparent pixel we paint the
+#      local average of the surrounding opaque face pixels, so the seams reveal
+#      skin tone instead of the white background. Outside the silhouette the
+#      canvas stays white, keeping the database-friendly white background.
+
+_FILL_SIGMA = 22.0
+
+
+def _silhouette(alpha: np.ndarray) -> np.ndarray:
+    """One clean, softly-feathered mask from the union of component alphas."""
+    hard = (alpha > 0.4).astype(np.uint8) * 255
+    img = Image.fromarray(hard).filter(ImageFilter.MaxFilter(5))  # close tiny notches
+    img = img.filter(ImageFilter.GaussianBlur(6))                 # single soft edge
+    return np.asarray(img, dtype=np.float32) / 255.0
+
+
+def _flatten_seamless(strips: Image.Image) -> Image.Image:
+    """Flatten the stacked components over white without white seams."""
+    arr = np.asarray(strips, dtype=np.float32)
+    rgb, alpha = arr[:, :, :3], arr[:, :, 3] / 255.0
+    if alpha.max() <= 0:
+        return Image.new("RGBA", CANVAS_SIZE, (255, 255, 255, 255))
+
+    sil = _silhouette(alpha)[:, :, None]
+    a3 = alpha[:, :, None]
+
+    # Local face tone behind partial-alpha pixels (alpha-weighted Gaussian blur,
+    # normalized so transparent areas borrow colour from opaque neighbours).
+    fill_num = cv2.GaussianBlur(rgb * a3, (0, 0), _FILL_SIGMA)
+    fill_den = cv2.GaussianBlur(alpha, (0, 0), _FILL_SIGMA)[:, :, None] + 1e-6
+    fill = fill_num / fill_den
+
+    filled = rgb * a3 + fill * (1 - a3)      # seams reveal skin, not white
+    out = filled * sil + 255.0 * (1 - sil)   # outside the silhouette stays white
+
+    rgba = np.dstack([out, np.full(alpha.shape, 255.0)])
+    return Image.fromarray(rgba.clip(0, 255).astype(np.uint8), "RGBA")
+
+
 # ── PUBLIC API ────────────────────────────────────────────────────────────────
 
 def list_components(category: str) -> list[tuple[str, Path]]:
@@ -118,7 +170,9 @@ def list_components(category: str) -> list[tuple[str, Path]]:
 
 
 def compose(selection: dict[str, Path | None]) -> Image.Image:
-    canvas = Image.new("RGBA", CANVAS_SIZE, (255, 255, 255, 255))
+    # Stack the components on a transparent canvas first, preserving alpha, so
+    # _flatten_seamless can tell real face pixels from the (still empty) seams.
+    strips = Image.new("RGBA", CANVAS_SIZE, (0, 0, 0, 0))
     face_shape = _extract_face_shape(selection.get("rosto"))
 
     for layer in LAYER_ORDER:
@@ -130,8 +184,9 @@ def compose(selection: dict[str, Path | None]) -> Image.Image:
             component = component.resize(CANVAS_SIZE, Image.LANCZOS)
         if layer != "rosto":
             component = _warp_component(component, layer, face_shape)
-        canvas = Image.alpha_composite(canvas, component)
-    return canvas
+        strips = Image.alpha_composite(strips, component)
+
+    return _flatten_seamless(strips)
 
 
 def save(image: Image.Image, path: Path = OUTPUT_PATH) -> Path:
