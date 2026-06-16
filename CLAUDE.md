@@ -7,36 +7,39 @@ Sistema que monta um retrato falado a partir de componentes faciais PNG e o comp
 
 ## Stack
 - Python 3.x
-- OpenCV (`cv2`), Pillow (`PIL`), NumPy, Matplotlib
-- Interface: Tkinter (ou CLI simples)
+- OpenCV (`cv2`), Pillow (`PIL`), NumPy
+- Interface: Flask (web)
 
 ## Estrutura de Pastas
 ```
 A3/
-├── main.py                        # Entry point
+├── app.py                         # Entry point (Flask)
 ├── composer.py                    # Composição de camadas (Etapa 1-2)
 ├── preprocessor.py                # Pré-processamento (Etapa 3)
 ├── database.py                    # Carregamento da base (Etapa 4)
 ├── features.py                    # Extração LBPH (Etapa 5)
 ├── recognizer.py                  # Reconhecimento + ranking (Etapa 6)
+├── templates/                     # HTML do front-end Flask
+├── static/                        # CSS/JS do front-end
 ├── faces/                         # Assets PNG com fundo transparente
-│   ├── rosto/
 │   ├── cabelo/
-│   ├── olhos/
 │   ├── sobrancelhas/
+│   ├── olhos/
 │   ├── nariz/
 │   ├── boca/
-│   └── barba/
-├── database/                      # Base de rostos (AT&T ou similar)
+│   ├── queixo/
+│   └── groups.json                # Grupos de compatibilidade pose/proporção
+├── database/                      # Base de rostos (face_NN/)
 ├── output/
 │   └── retrato_falado_suspeito.png
 └── model/
-    └── lbph_model.yml             # Modelo treinado salvo
+    ├── lbph_model.yml             # Modelo treinado salvo
+    └── training_data.npz          # Dados para ranking top-N
 ```
 
 ## Fluxo Principal
 ```
-Interface (seleciona componentes)
+Interface web (seleciona componentes)
   → composer.py    → output/retrato_falado_suspeito.png
   → preprocessor.py → face recortada + normalizada
   → features.py    → vetor de características (LBPH)
@@ -57,8 +60,8 @@ Interface (seleciona componentes)
 
 ## Como Rodar
 ```bash
-pip install opencv-contrib-python Pillow numpy matplotlib
-python main.py
+pip install -r requirements.txt
+python app.py   # abre em http://localhost:5000
 ```
 
 ## Entregáveis
