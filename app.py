@@ -200,8 +200,10 @@ def _bootstrap() -> None:
         Path(d).mkdir(exist_ok=True)
     faces_dir = Path("faces")
     if not any(faces_dir.rglob("*.png")):
-        import generate_assets
-        generate_assets.main()
+        raise SystemExit(
+            "Nenhum componente PNG encontrado em faces/. "
+            "Os assets fazem parte do repositório — verifique a integridade do projeto."
+        )
 
 
 if __name__ == "__main__":
