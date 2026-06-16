@@ -2,8 +2,14 @@
 
 // ── State ─────────────────────────────────────────────────────────────────
 const selection = {};   // { category: name | null }
-let components  = {};   // { category: { label, options:[{name,url}] } }
+let components  = {};   // { category: { label, options:[{name,url,group}] } }
 let composeJob  = null; // debounce timer
+
+// Compatibilidade: só é possível misturar componentes de faces do mesmo grupo
+// (pose/proporção). Ver compute_groups.py / faces/groups.json.
+const faceGroups  = {}; // { name: groupId }
+let   groupLabels = {}; // { groupId: label }
+let   groupingOn  = false;
 
 // ── Bootstrap ─────────────────────────────────────────────────────────────
 
@@ -53,7 +59,16 @@ async function refreshModelInfo() {
 
 async function loadComponents() {
   const data = await (await fetch('/api/components')).json();
-  components = data;
+  // Compat: API antiga devolvia as categorias na raiz; a nova usa {categories, groups}.
+  components  = data.categories || data;
+  groupLabels = data.groups || {};
+  groupingOn  = Object.keys(groupLabels).length > 0;
+
+  for (const cat of Object.values(components)) {
+    for (const opt of cat.options) {
+      if (opt.group !== undefined && opt.group !== null) faceGroups[opt.name] = opt.group;
+    }
+  }
   buildSidebar();
 }
 
@@ -65,6 +80,15 @@ const CAT_ICON = {
 function buildSidebar() {
   const panel = document.getElementById('sidebar-inner');
   panel.innerHTML = '';
+
+  if (groupingOn) {
+    const banner = el('div', 'group-banner');
+    banner.id = 'group-banner';
+    banner.innerHTML =
+      '<span id="group-banner-text"></span>' +
+      '<button class="group-reset" id="group-reset" onclick="switchGroup()">Trocar grupo</button>';
+    panel.appendChild(banner);
+  }
 
   for (const [cat, data] of Object.entries(components)) {
     const sec = el('div', 'cat-section');
@@ -88,6 +112,7 @@ function buildSidebar() {
       const tile = el('div', 'thumb');
       tile.dataset.cat  = cat;
       tile.dataset.name = opt.name;
+      if (opt.group !== undefined && opt.group !== null) tile.dataset.group = opt.group;
 
       const img = document.createElement('img');
       img.src     = opt.url;
@@ -109,9 +134,11 @@ function buildSidebar() {
 }
 
 function pick(cat, name, tile) {
+  if (tile.classList.contains('disabled')) return;   // face de grupo incompatível
   selection[cat] = name || null;
   document.querySelectorAll(`#grid-${cat} .thumb`).forEach(t => t.classList.remove('active'));
   tile.classList.add('active');
+  applyGroupFilter();
   scheduleCompose();
 }
 
@@ -123,6 +150,53 @@ function highlightAll() {
       t.classList.toggle('active', name ? t.dataset.name === name : t.dataset.name === '');
     });
   }
+  applyGroupFilter();
+}
+
+// ── Filtro de compatibilidade (pose/proporção) ─────────────────────────────
+
+/** Grupo definido pelos componentes já selecionados (null = nenhum, livre). */
+function activeGroup() {
+  for (const name of Object.values(selection)) {
+    if (name && name in faceGroups) return faceGroups[name];
+  }
+  return null;
+}
+
+/** Desabilita as faces de grupos incompatíveis e atualiza o banner. */
+function applyGroupFilter() {
+  if (!groupingOn) return;
+  const ag = activeGroup();
+
+  document.querySelectorAll('.thumb').forEach(t => {
+    if (t.classList.contains('none-thumb')) return;          // "Nenhum" sempre liberado
+    const g = t.dataset.group;
+    const incompatible = ag !== null && g !== undefined && Number(g) !== ag;
+    t.classList.toggle('disabled', incompatible);
+    t.title = incompatible
+      ? `Bloqueado: ${groupLabels[g] ?? 'outro grupo'} é incompatível com ${groupLabels[ag]}`
+      : '';
+  });
+
+  const banner = document.getElementById('group-banner-text');
+  const reset  = document.getElementById('group-reset');
+  if (banner) {
+    if (ag === null) {
+      banner.textContent = 'Escolha um componente para fixar o grupo do rosto.';
+      if (reset) reset.style.visibility = 'hidden';
+    } else {
+      banner.textContent = `Grupo ativo: ${groupLabels[ag]} — só faces compatíveis.`;
+      if (reset) reset.style.visibility = 'visible';
+    }
+  }
+}
+
+/** Limpa a seleção para permitir começar de outro grupo. */
+function switchGroup() {
+  for (const cat of Object.keys(selection)) selection[cat] = null;
+  document.querySelectorAll('.thumb.active').forEach(t => t.classList.remove('active'));
+  applyGroupFilter();
+  scheduleCompose();
 }
 
 // ── Compose (debounced) ───────────────────────────────────────────────────
