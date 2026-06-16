@@ -2,6 +2,7 @@
 from __future__ import annotations
 import base64
 import io
+import json
 import threading
 from pathlib import Path
 
@@ -16,6 +17,19 @@ app = Flask(__name__)
 
 SUPPORTED_IMG = {".pgm", ".jpg", ".jpeg", ".png", ".bmp"}
 DATABASE_DIR = Path(__file__).parent / "database"
+GROUPS_PATH = Path(__file__).parent / "faces" / "groups.json"
+
+
+def _load_groups() -> dict:
+    """Mapa de compatibilidade face→grupo (faces/groups.json).
+
+    Gerado por compute_groups.py. Se ausente, devolve vazio e a interface
+    simplesmente não aplica o filtro de compatibilidade.
+    """
+    try:
+        return json.loads(GROUPS_PATH.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError):
+        return {"groups": {}, "faces": {}}
 
 _train_lock = threading.Lock()
 _train_state: dict = {"status": "idle", "message": ""}
@@ -71,17 +85,23 @@ def index():
 
 @app.get("/api/components")
 def get_components():
-    result = {}
+    groups_data = _load_groups()
+    face_groups = groups_data.get("faces", {})
+    categories = {}
     for category in composer.LAYER_ORDER:
         options = composer.list_components(category)
-        result[category] = {
+        categories[category] = {
             "label": composer.CATEGORY_LABELS[category],
             "options": [
-                {"name": name, "url": f"/api/component-image/{category}/{name}"}
-                for name, _ in options
+                {
+                    "name": name,
+                    "url": f"/api/component-image/{category}/{name}",
+                    "group": face_groups.get(path.stem),
+                }
+                for name, path in options
             ],
         }
-    return jsonify(result)
+    return jsonify({"categories": categories, "groups": groups_data.get("groups", {})})
 
 
 @app.get("/api/component-image/<category>/<name>")

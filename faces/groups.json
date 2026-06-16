@@ -1,0 +1,29 @@
+{
+  "groups": {
+    "0": "Rosto curto",
+    "1": "Rosto médio",
+    "2": "Rosto longo"
+  },
+  "faces": {
+    "face_01": 1,
+    "face_02": 1,
+    "face_03": 2,
+    "face_04": 1,
+    "face_05": 1,
+    "face_06": 1,
+    "face_07": 1,
+    "face_08": 0,
+    "face_09": 2,
+    "face_10": 1,
+    "face_11": 2,
+    "face_12": 1,
+    "face_13": 2,
+    "face_14": 0,
+    "face_15": 2,
+    "face_16": 1,
+    "face_17": 1,
+    "face_18": 2,
+    "face_19": 1,
+    "face_20": 1
+  }
+}
