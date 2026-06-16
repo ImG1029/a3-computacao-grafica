@@ -193,10 +193,17 @@ function applyGroupFilter() {
 
 /** Limpa a seleção para permitir começar de outro grupo. */
 function switchGroup() {
+  clearSelection();
+}
+
+// ── Limpar ──────────────────────────────────────────────────────────────────
+
+/** Remove todos os componentes da montagem e devolve o retrato em branco. */
+function clearSelection() {
   for (const cat of Object.keys(selection)) selection[cat] = null;
-  document.querySelectorAll('.thumb.active').forEach(t => t.classList.remove('active'));
-  applyGroupFilter();
-  scheduleCompose();
+  highlightAll();          // marca os tiles "Nenhum" e reaplica o filtro de grupo
+  scheduleCompose();       // seleção vazia → backend devolve canvas branco
+  setStatus('Composição limpa.', '');
 }
 
 // ── Compose (debounced) ───────────────────────────────────────────────────
