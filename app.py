@@ -3,14 +3,12 @@ from __future__ import annotations
 import base64
 import io
 import json
-import threading
 from pathlib import Path
 
 from flask import Flask, jsonify, render_template, request, send_file
 from PIL import Image
 
 import composer
-import features
 import recognizer as rec
 
 app = Flask(__name__)
@@ -30,9 +28,6 @@ def _load_groups() -> dict:
         return json.loads(GROUPS_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
         return {"groups": {}, "faces": {}}
-
-_train_lock = threading.Lock()
-_train_state: dict = {"status": "idle", "message": ""}
 
 
 def _selection_from_body(data: dict) -> dict[str, Path | None]:
@@ -139,37 +134,8 @@ def api_recognize():
     })
 
 
-@app.post("/api/train")
-def api_train():
-    global _train_state
-    with _train_lock:
-        if _train_state["status"] == "running":
-            return jsonify({"error": "Treinamento já em andamento"}), 409
-        _train_state = {"status": "running", "message": "Carregando base de dados..."}
-
-    def _worker():
-        global _train_state
-        try:
-            rec.train_model()
-            with _train_lock:
-                _train_state = {"status": "done", "message": "Modelo treinado com sucesso!"}
-        except Exception as exc:
-            with _train_lock:
-                _train_state = {"status": "error", "message": str(exc)}
-
-    threading.Thread(target=_worker, daemon=True).start()
-    return jsonify({"status": "started"})
-
-
-@app.get("/api/train/status")
-def api_train_status():
-    with _train_lock:
-        return jsonify(_train_state.copy())
-
-
 @app.get("/api/model-info")
 def api_model_info():
-    trained = features.is_trained()
     subjects = []
     total = 0
     if DATABASE_DIR.exists():
@@ -180,7 +146,6 @@ def api_model_info():
                     subjects.append(d.name.replace("_", " ").title())
                     total += len(imgs)
     return jsonify({
-        "trained": trained,
         "subject_count": len(subjects),
         "image_count": total,
         "subjects": subjects,
@@ -188,7 +153,7 @@ def api_model_info():
 
 
 def _bootstrap() -> None:
-    for d in ("output", "model", "database"):
+    for d in ("output", "database"):
         Path(d).mkdir(exist_ok=True)
     faces_dir = Path("faces")
     if not any(faces_dir.rglob("*.png")):
