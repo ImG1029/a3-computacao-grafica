@@ -1,4 +1,3 @@
-"""Reconhecimento facial por regiões: compara o retrato falado com a galeria de componentes de cada sujeito."""
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -19,24 +18,12 @@ class Match:
 
     @property
     def similarity(self) -> float:
-        """Normalized similarity score [0, 1]. Lower distance = higher similarity."""
         return round(1 / (1 + self.distance / 100), 4)
-
-
-# ── REGION-AWARE RECOGNITION ────────────────────────────────────────────────
-#
-# A partial retrato falado (e.g. only "boca" + "cabelo") leaves most of the
-# 500x600 canvas white. A holistic LBP histogram over the whole image is then
-# dominated by that flat background and cannot attribute a region to the
-# component's owner. Instead we compare EACH selected component against the same
-# region of every subject and sum the per-region distances: the owner of each
-# selected component scores ~0 in that region and surfaces in the top N.
 
 _REGION_SIZE = (200, 200)
 
 
 def _component_gray(path: Path) -> np.ndarray:
-    """Render a single component over white → 200x200 grayscale (region template)."""
     img = Image.open(path).convert("RGBA")
     if img.size != composer.CANVAS_SIZE:
         img = img.resize(composer.CANVAS_SIZE, Image.LANCZOS)
@@ -57,11 +44,6 @@ def _subject_stems() -> list[str]:
 
 
 def recognize_selection(selection: dict[str, Path | None], top_n: int = 5) -> list[Match]:
-    """Rank subjects by similarity of their facial regions to the selected components.
-
-    `selection` maps each category to the chosen component Path (or None). Only
-    categories with a real, non-constant component contribute to the score.
-    """
     chosen = {cat: path for cat, path in selection.items() if path}
     if not chosen:
         raise RuntimeError("Selecione ao menos um componente para reconhecer.")

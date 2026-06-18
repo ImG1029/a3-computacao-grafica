@@ -1,9 +1,7 @@
-"""LBP histogram feature extraction."""
 import numpy as np
 
 
 def lbp_histogram(gray: np.ndarray) -> np.ndarray:
-    """Compute 256-bin LBP histogram via vectorized 8-neighbor encoding."""
     h, w = gray.shape
     center = gray[1 : h - 1, 1 : w - 1].astype(np.int16)
     lbp = np.zeros((h - 2, w - 2), dtype=np.uint8)

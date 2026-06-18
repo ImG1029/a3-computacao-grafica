@@ -1,4 +1,3 @@
-"""Flask web application — Sistema de Retrato Falado."""
 from __future__ import annotations
 import base64
 import io
@@ -19,11 +18,6 @@ GROUPS_PATH = Path(__file__).parent / "faces" / "groups.json"
 
 
 def _load_groups() -> dict:
-    """Mapa de compatibilidade face→grupo (faces/groups.json).
-
-    Gerado por compute_groups.py. Se ausente, devolve vazio e a interface
-    simplesmente não aplica o filtro de compatibilidade.
-    """
     try:
         return json.loads(GROUPS_PATH.read_text(encoding="utf-8"))
     except (OSError, json.JSONDecodeError):
@@ -132,25 +126,6 @@ def api_recognize():
             for m in matches
         ]
     })
-
-
-@app.get("/api/model-info")
-def api_model_info():
-    subjects = []
-    total = 0
-    if DATABASE_DIR.exists():
-        for d in sorted(DATABASE_DIR.iterdir()):
-            if d.is_dir():
-                imgs = [f for f in d.iterdir() if f.suffix.lower() in SUPPORTED_IMG]
-                if imgs:
-                    subjects.append(d.name.replace("_", " ").title())
-                    total += len(imgs)
-    return jsonify({
-        "subject_count": len(subjects),
-        "image_count": total,
-        "subjects": subjects,
-    })
-
 
 def _bootstrap() -> None:
     for d in ("output", "database"):

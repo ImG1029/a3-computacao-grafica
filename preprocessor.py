@@ -8,11 +8,6 @@ _CASCADE = cv2.CascadeClassifier(cv2.data.haarcascades + "haarcascade_frontalfac
 
 
 def preprocess(image: Image.Image) -> np.ndarray:
-    """Convert PIL image to normalized 200x200 grayscale face crop.
-
-    Falls back to center crop if Haar Cascade finds no face — needed for
-    placeholder assets that aren't real photographs.
-    """
     gray = _to_gray(image)
     roi = _detect_face(gray) or _center_crop(gray)
     x, y, w, h = roi
