@@ -25,8 +25,6 @@ html, body {
   line-height: 1.5;
 }
 
-/* ── Header ─────────────────────────────────────────────────────────── */
-
 .header {
   height: 68px;
   background: var(--surface);
@@ -75,8 +73,6 @@ html, body {
   gap: 12px;
 }
 
-/* ── Status pill ────────────────────────────────────────────────────── */
-
 .model-pill {
   display: flex;
   align-items: center;
@@ -101,15 +97,11 @@ html, body {
 .dot.warn{ background: var(--amber); }
 .dot.err { background: var(--red);   }
 
-/* ── Layout ─────────────────────────────────────────────────────────── */
-
 .layout {
   display: flex;
   height: calc(100vh - 68px);
   overflow: hidden;
 }
-
-/* ── Sidebar ─────────────────────────────────────────────────────────── */
 
 .sidebar {
   width: var(--sidebar-w);
@@ -210,7 +202,6 @@ html, body {
   text-overflow: ellipsis;
 }
 
-/* "Nenhum" cell */
 .thumb.none-thumb {
   background: var(--surface2);
   border-style: dashed;
@@ -229,7 +220,6 @@ html, body {
   font-size: 8px;
 }
 
-/* ── Compatibilidade (grupos de pose/proporção) ───────────────────────── */
 .thumb.disabled {
   opacity: .3;
   filter: grayscale(1);
@@ -269,8 +259,6 @@ html, body {
   border-color: var(--blue);
   background: rgba(59,130,246,.12);
 }
-
-/* ── Center panel ────────────────────────────────────────────────────── */
 
 .center {
   flex: 1;
@@ -334,7 +322,6 @@ html, body {
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 
-/* Corner scan lines */
 .face-frame::before, .face-frame::after {
   content: '';
   position: absolute;
@@ -345,8 +332,6 @@ html, body {
 }
 .face-frame::before { top: 10px; left: 10px; border-width: 2px 0 0 2px; }
 .face-frame::after  { bottom: 10px; right: 10px; border-width: 0 2px 2px 0; }
-
-/* ── Buttons ─────────────────────────────────────────────────────────── */
 
 .btn-row { display: flex; gap: 10px; }
 
@@ -384,8 +369,6 @@ html, body {
 }
 .status-line.err  { color: var(--red); }
 .status-line.ok   { color: var(--green); }
-
-/* ── Results panel ────────────────────────────────────────────────────── */
 
 .results-panel {
   width: 0;
@@ -429,8 +412,6 @@ html, body {
   line-height: 1;
 }
 .close-x:hover { background: var(--surface2); color: var(--text); }
-
-/* ── Match cards ─────────────────────────────────────────────────────── */
 
 .match-card {
   margin: 10px 12px;
@@ -532,8 +513,6 @@ html, body {
   transition: width .6s cubic-bezier(.4,0,.2,1);
 }
 .gold .sim-fill { background: var(--green); }
-
-/* ── Modal overlay ───────────────────────────────────────────────────── */
 
 .overlay {
   position: fixed;

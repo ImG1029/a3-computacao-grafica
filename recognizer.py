@@ -35,7 +35,6 @@ def recognize(image: Image.Image, top_n: int = 5) -> list[Match]:
 
     train_images, train_labels = features.load_training_data()
 
-    # Compute chi-squared distance from query to every training sample
     best: dict[int, float] = {}
     for img, label in zip(train_images, train_labels):
         dist = _chi_squared(query_hist, features.lbp_histogram(img))

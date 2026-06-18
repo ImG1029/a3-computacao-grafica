@@ -1,6 +1,5 @@
 'use strict';
 
-// ── State ─────────────────────────────────────────────────────────────────
 const selection = {};   // { category: name | null }
 let components  = {};   // { category: { label, options:[{name,url,group}] } }
 let composeJob  = null; // debounce timer
@@ -11,10 +10,8 @@ const faceGroups  = {}; // { name: groupId }
 let   groupLabels = {}; // { groupId: label }
 let   groupingOn  = false;
 
-// ── Bootstrap ─────────────────────────────────────────────────────────────
-
 document.addEventListener('DOMContentLoaded', async () => {
-  await Promise.all([loadComponents(), refreshModelInfo()]);
+  await loadComponents();
 
   // Default: nenhum componente selecionado
   for (const cat of Object.keys(components)) {
@@ -24,8 +21,6 @@ document.addEventListener('DOMContentLoaded', async () => {
   await compose();
 });
 
-// ── API helpers ───────────────────────────────────────────────────────────
-
 async function post(url, body) {
   const r = await fetch(url, {
     method: 'POST',
@@ -34,28 +29,6 @@ async function post(url, body) {
   });
   return r.json();
 }
-
-// ── Model info (header status) ────────────────────────────────────────────
-
-async function refreshModelInfo() {
-  try {
-    const info = await (await fetch('/api/model-info')).json();
-    const dot  = document.getElementById('dot');
-    const txt  = document.getElementById('dot-text');
-    if (info.trained) {
-      dot.className = 'dot ok';
-      txt.textContent = `Modelo ativo · ${info.subject_count} pessoas · ${info.image_count} fotos`;
-    } else if (info.image_count > 0) {
-      dot.className = 'dot warn';
-      txt.textContent = `${info.subject_count} pessoas · Modelo não treinado`;
-    } else {
-      dot.className = 'dot warn';
-      txt.textContent = 'Sem base de dados — execute download_lfw.py';
-    }
-  } catch { /* ignore */ }
-}
-
-// ── Components + sidebar ──────────────────────────────────────────────────
 
 async function loadComponents() {
   const data = await (await fetch('/api/components')).json();
@@ -153,8 +126,6 @@ function highlightAll() {
   applyGroupFilter();
 }
 
-// ── Filtro de compatibilidade (pose/proporção) ─────────────────────────────
-
 /** Grupo definido pelos componentes já selecionados (null = nenhum, livre). */
 function activeGroup() {
   for (const name of Object.values(selection)) {
@@ -196,8 +167,6 @@ function switchGroup() {
   clearSelection();
 }
 
-// ── Limpar ──────────────────────────────────────────────────────────────────
-
 /** Remove todos os componentes da montagem e devolve o retrato em branco. */
 function clearSelection() {
   for (const cat of Object.keys(selection)) selection[cat] = null;
@@ -205,8 +174,6 @@ function clearSelection() {
   scheduleCompose();       // seleção vazia → backend devolve canvas branco
   setStatus('Composição limpa.', '');
 }
-
-// ── Compose (debounced) ───────────────────────────────────────────────────
 
 function scheduleCompose() {
   clearTimeout(composeJob);
@@ -229,8 +196,6 @@ function showOverlay(on) {
   document.getElementById('face-overlay').classList.toggle('show', on);
 }
 
-// ── Save ──────────────────────────────────────────────────────────────────
-
 function savePortrait() {
   const src = document.getElementById('preview').src;
   if (!src || src === window.location.href) return;
@@ -240,8 +205,6 @@ function savePortrait() {
   a.click();
   setStatus('Retrato salvo!', 'ok');
 }
-
-// ── Recognize ─────────────────────────────────────────────────────────────
 
 async function recognize() {
   const btn = document.getElementById('btn-rec');
@@ -304,40 +267,6 @@ function renderResults(matches) {
 function closeResults() {
   document.getElementById('results-panel').classList.remove('open');
 }
-
-// ── Train ─────────────────────────────────────────────────────────────────
-
-async function trainModel() {
-  const modal = document.getElementById('train-modal');
-  const msg   = document.getElementById('train-msg');
-  modal.classList.remove('hidden');
-  msg.textContent = 'Iniciando treinamento...';
-
-  try {
-    const res = await post('/api/train', {});
-    if (res.error) { modal.classList.add('hidden'); setStatus(res.error, 'err'); return; }
-  } catch { modal.classList.add('hidden'); return; }
-
-  const poll = setInterval(async () => {
-    try {
-      const s = await (await fetch('/api/train/status')).json();
-      msg.textContent = s.message || s.status;
-
-      if (s.status === 'done') {
-        clearInterval(poll);
-        modal.classList.add('hidden');
-        setStatus('Modelo treinado com sucesso!', 'ok');
-        await refreshModelInfo();
-      } else if (s.status === 'error') {
-        clearInterval(poll);
-        modal.classList.add('hidden');
-        setStatus(`Erro: ${s.message}`, 'err');
-      }
-    } catch { clearInterval(poll); modal.classList.add('hidden'); }
-  }, 700);
-}
-
-// ── Utils ─────────────────────────────────────────────────────────────────
 
 function setStatus(text, type) {
   const bar = document.getElementById('status-bar');

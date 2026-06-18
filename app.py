@@ -35,8 +35,6 @@ _train_lock = threading.Lock()
 _train_state: dict = {"status": "idle", "message": ""}
 
 
-# ── helpers ───────────────────────────────────────────────────────────────
-
 def _selection_from_body(data: dict) -> dict[str, Path | None]:
     selection: dict[str, Path | None] = {}
     for category in composer.LAYER_ORDER:
@@ -75,8 +73,6 @@ def _subject_preview(subject: str) -> str | None:
     img.thumbnail((200, 200))
     return _img_to_b64(img, "JPEG")
 
-
-# ── routes ────────────────────────────────────────────────────────────────
 
 @app.get("/")
 def index():
@@ -121,8 +117,6 @@ def api_compose():
 
 @app.post("/api/recognize")
 def api_recognize():
-    if not features.is_trained():
-        return jsonify({"error": "Modelo não treinado. Clique em 'Treinar Modelo' primeiro."}), 400
     selection = _selection_from_body(request.json or {})
     image = composer.compose(selection)
     composer.save(image)
@@ -192,8 +186,6 @@ def api_model_info():
         "subjects": subjects,
     })
 
-
-# ── bootstrap ─────────────────────────────────────────────────────────────
 
 def _bootstrap() -> None:
     for d in ("output", "model", "database"):

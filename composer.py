@@ -157,8 +157,6 @@ def _flatten_seamless(strips: Image.Image) -> Image.Image:
     return Image.fromarray(rgba.clip(0, 255).astype(np.uint8), "RGBA")
 
 
-# ── PUBLIC API ────────────────────────────────────────────────────────────────
-
 def list_components(category: str) -> list[tuple[str, Path]]:
     path = FACES_DIR / category
     if not path.exists():
